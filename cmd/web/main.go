@@ -1,44 +1,43 @@
 package main
 
 import (
-	"database/sql" //new import
+	"database/sql"
 	"flag"
 	"log"
 	"net/http"
 	"os"
-	_ "github.com/go-sql-driver/mysql" //new import
+	"fernastereo.net/snippedbox/pkg/models/mysql"
+	_ "github.com/go-sql-driver/mysql" 
 )
 
+//Add a snippets field to the application struct. This will allow us to
+//make the SnippetModel object available to our handlers
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	snippets *mysql.SnippetModel
 }
 
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
-	//Define a new command-line flag for the mysql DNS string
 	dsn := flag.String("dsn", "web:Luisa2012@/snippetbox?parseTime=true", "MySQL data source name")
 	flag.Parse()
 
-	//db, err := sql.Open("mysql", "web:Luisa2012@tcp(127.0.0.1:3308)/snippetbox?parseTime=true")
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// to keep the main() function tidy I've put the code for creating a connection
-	// pool into the separate openDB() function below, We pass openDB() the DSN from
-	// the command line flag
 	db, err := openDB(*dsn)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
-
-	// We also defer a call to openDB(), so that the connection pool is closed
-	// before the main() function exits
 	defer db.Close()
 
+	//initialize a mysql.SnippetModel instance and add it to the application
+	//dependencies
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
+		snippets: &mysql.SnippetModel{DB: db},
 	}
 
 	srv := &http.Server{
@@ -48,14 +47,10 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %s", *addr)
-	// Because the err variable is now already declared in the code above, we need
-	// to use the assignment operator = here, instead of the := 'declare and assign' operator
 	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 }
 
-// The openDB() function wraps sql.Open() and returns a sql.DB connection pool
-// for a given DSN
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
