@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	_ "github.com/go-sql-driver/mysql" //new import
 )
 
@@ -18,9 +17,10 @@ type application struct {
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
 	//Define a new command-line flag for the mysql DNS string
-	dsn := flag.String("dsn", "web:Luisa2012$@/snippetbox?parseTime=true", "MySQL data source name")
+	dsn := flag.String("dsn", "web:Luisa2012@/snippetbox?parseTime=true", "MySQL data source name")
 	flag.Parse()
 
+	//db, err := sql.Open("mysql", "web:Luisa2012@tcp(127.0.0.1:3308)/snippetbox?parseTime=true")
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
@@ -54,15 +54,15 @@ func main() {
 	errorLog.Fatal(err)
 }
 
-// The openDB() funcition wraps sql.Open() and returns a sql.DB connection pool
+// The openDB() function wraps sql.Open() and returns a sql.DB connection pool
 // for a given DSN
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
+	// if err = db.Ping(); err != nil {
+	// 	return nil, err
+	// }
 	return db, nil
 }
